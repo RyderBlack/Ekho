@@ -2,6 +2,7 @@ import gradio as gr
 from gradio_client import Client, handle_file
 import os
 from dotenv import load_dotenv
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,7 +21,6 @@ def transcribe_audio(audio_file, task="transcribe"):
     Transcribe an audio file using the Whisper API
     """
     try:
-        # Initialize client with token
         client = Client(
             "hf-audio/whisper-large-v3-turbo",
             hf_token=get_hf_token()
@@ -38,53 +38,72 @@ def create_interface():
     """
     Create the Gradio interface
     """
-    with gr.Blocks(title="Whisper Transcription", theme=gr.themes.Soft()) as interface:
-        gr.Markdown("# 🎤 Whisper Large V3 Turbo Transcription")
-        gr.Markdown("Record your voice or upload an audio file to transcribe it.")
+    with gr.Blocks(title="Ekho", theme=gr.themes.Soft()) as interface:
+        gr.Markdown("# Ekho")
+        
+        # Instructions
+        gr.Markdown("""
+        ### Instructions
+        Pour commencer, cliquez sur le bouton vert "Start" et dites :
+        "Mon nom est [votre nom]"
+        
+        Cliquez sur "Stop" lorsque vous avez terminé.
+        """)
         
         with gr.Row():
-            with gr.Column():
-                # Audio input
+            with gr.Column(scale=1):
+                # Audio input (hidden)
                 audio_input = gr.Audio(
-                    sources=["microphone", "upload"],
+                    sources=["microphone"],
                     type="filepath",
-                    label="Record or Upload Audio"
+                    visible=False
                 )
                 
-                # Task selection
-                task = gr.Radio(
-                    choices=["transcribe", "translate"],
-                    value="transcribe",
-                    label="Task"
+                # Start/Stop button
+                start_stop_btn = gr.Button(
+                    "Start",
+                    variant="primary",
+                    size="lg"
                 )
                 
-                # Submit button
-                submit_btn = gr.Button("Transcribe", variant="primary")
-            
-            with gr.Column():
                 # Output text
                 output_text = gr.Textbox(
                     label="Transcription",
-                    placeholder="Transcription will appear here...",
-                    lines=5
+                    placeholder="Votre transcription apparaîtra ici...",
+                    lines=3
                 )
         
-        # Set up the submit action
-        submit_btn.click(
-            fn=transcribe_audio,
-            inputs=[audio_input, task],
-            outputs=output_text
-        )
+        # State to track recording status
+        is_recording = gr.State(False)
         
-        # Examples
-        gr.Examples(
-            examples=[
-                ["https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav", "transcribe"],
-            ],
-            inputs=[audio_input, task],
-            outputs=output_text,
-            fn=transcribe_audio,
-            cache_examples=True,
+        def toggle_recording():
+            if not is_recording.value:
+                # Start recording
+                is_recording.value = True
+                return "Stop", gr.update(variant="stop")
+            else:
+                # Stop recording
+                is_recording.value = False
+                return "Start", gr.update(variant="primary")
+        
+        def on_stop(audio):
+            if audio is not None:
+                return transcribe_audio(audio)
+            return "Aucun enregistrement trouvé."
+        
+        # Set up the button click action
+        start_stop_btn.click(
+            fn=toggle_recording,
+            inputs=[],
+            outputs=[start_stop_btn, start_stop_btn]
+        ).then(
+            fn=lambda: None,
+            inputs=[],
+            outputs=audio_input
+        ).then(
+            fn=on_stop,
+            inputs=[audio_input],
+            outputs=output_text
         )
     
     return interface
