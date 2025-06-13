@@ -1,14 +1,30 @@
 import gradio as gr
 from gradio_client import Client, handle_file
 import os
-import tempfile
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+def get_hf_token():
+    """
+    Get Hugging Face token from .env file
+    """
+    token = os.getenv("HF_TOKEN")
+    if not token:
+        raise ValueError("HF_TOKEN not found in .env file. Please add your Hugging Face token to the .env file.")
+    return token
 
 def transcribe_audio(audio_file, task="transcribe"):
     """
     Transcribe an audio file using the Whisper API
     """
     try:
-        client = Client("hf-audio/whisper-large-v3-turbo")
+        # Initialize client with token
+        client = Client(
+            "hf-audio/whisper-large-v3-turbo",
+            hf_token=get_hf_token()
+        )
         result = client.predict(
             inputs=handle_file(audio_file),
             task=task,
@@ -74,5 +90,7 @@ def create_interface():
     return interface
 
 if __name__ == "__main__":
+    # Verify token is available before starting
+    get_hf_token()
     interface = create_interface()
     interface.launch(share=True) 
