@@ -50,6 +50,11 @@
             margin: 1rem 0;
         }
 
+        .record-button.default {
+            background-color: #95a5a6;
+            color: white;
+        }
+
         .record-button.start {
             background-color: #2ecc71;
             color: white;
@@ -60,7 +65,13 @@
             color: white;
         }
 
-        .record-button:hover {
+        .record-button.processing {
+            background-color: #3498db;
+            color: white;
+            cursor: wait;
+        }
+
+        .record-button:hover:not(.processing) {
             transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
@@ -74,6 +85,23 @@
             color: #2c3e50;
         }
 
+        .welcome-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .welcome-message.success {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .welcome-message.error {
+            background: #e74c3c;
+            color: white;
+        }
+
         .recording-indicator {
             display: none;
             color: #e74c3c;
@@ -84,6 +112,22 @@
         .recording-indicator.active {
             display: block;
             animation: pulse 1.5s infinite;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 20px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @keyframes pulse {
@@ -100,9 +144,11 @@
             Pour commencer, cliquez sur le bouton vert "Start" et dites :<br>
             "Mon nom est [votre nom]"
         </div>
-        <button id="recordButton" class="record-button start">Start</button>
+        <button id="recordButton" class="record-button default">Start</button>
         <div id="recordingIndicator" class="recording-indicator">Enregistrement en cours...</div>
+        <div id="loadingSpinner" class="loading-spinner"></div>
         <div id="transcription" class="transcription"></div>
+        <div id="welcomeMessage" class="welcome-message"></div>
     </div>
 
     <script>
@@ -113,6 +159,14 @@
         const recordButton = document.getElementById('recordButton');
         const recordingIndicator = document.getElementById('recordingIndicator');
         const transcription = document.getElementById('transcription');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        function capitalizeName(name) {
+            return name.split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+        }
 
         async function startRecording() {
             try {
@@ -130,30 +184,61 @@
                     formData.append('audio', audioBlob, 'recording.wav');
 
                     try {
+                        // Show loading spinner
+                        loadingSpinner.style.display = 'block';
+                        recordButton.classList.add('processing');
+                        recordButton.disabled = true;
+
                         const response = await fetch('/transcribe', {
                             method: 'POST',
                             body: formData
                         });
                         const data = await response.json();
+                        
                         if (data.transcription) {
                             transcription.textContent = data.transcription;
+                            if (data.welcome_message) {
+                                welcomeMessage.textContent = data.welcome_message;
+                                welcomeMessage.style.display = 'block';
+                                
+                                if (data.welcome_message.startsWith('Bienvenue')) {
+                                    welcomeMessage.className = 'welcome-message success';
+                                    recordButton.className = 'record-button start';
+                                } else {
+                                    welcomeMessage.className = 'welcome-message error';
+                                    recordButton.className = 'record-button stop';
+                                }
+                            } else {
+                                welcomeMessage.style.display = 'none';
+                                recordButton.className = 'record-button default';
+                            }
                         } else {
                             transcription.textContent = 'Erreur: ' + data.error;
+                            welcomeMessage.style.display = 'none';
+                            recordButton.className = 'record-button default';
                         }
                     } catch (error) {
                         transcription.textContent = 'Erreur de transcription: ' + error.message;
+                        welcomeMessage.style.display = 'none';
+                        recordButton.className = 'record-button default';
+                    } finally {
+                        // Hide loading spinner
+                        loadingSpinner.style.display = 'none';
+                        recordButton.classList.remove('processing');
+                        recordButton.disabled = false;
                     }
                 };
 
                 mediaRecorder.start();
                 isRecording = true;
                 recordButton.textContent = 'Stop';
-                recordButton.classList.remove('start');
-                recordButton.classList.add('stop');
+                recordButton.className = 'record-button stop';
                 recordingIndicator.classList.add('active');
             } catch (error) {
                 console.error('Error accessing microphone:', error);
                 transcription.textContent = 'Erreur: Impossible d\'accéder au microphone';
+                welcomeMessage.style.display = 'none';
+                recordButton.className = 'record-button default';
             }
         }
 
@@ -162,8 +247,7 @@
                 mediaRecorder.stop();
                 isRecording = false;
                 recordButton.textContent = 'Start';
-                recordButton.classList.remove('stop');
-                recordButton.classList.add('start');
+                recordButton.className = 'record-button processing';
                 recordingIndicator.classList.remove('active');
             }
         }

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ekho - Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 2.5rem;
+        }
+
+        .login-button {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .login-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .spreadsheet-section {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .spreadsheet-section.active {
+            display: block;
+        }
+
+        .file-input {
+            margin: 1rem 0;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ekho</h1>
+        <button id="loginButton" class="login-button">
+            Se connecter avec Google
+        </button>
+        <div id="errorMessage" class="error-message"></div>
+        
+        <div id="spreadsheetSection" class="spreadsheet-section">
+            <h2>Choisissez votre fichier</h2>
+            <div>
+                <button id="selectGoogleSheet" class="login-button">Sélectionner depuis Google Drive</button>
+            </div>
+            <div class="file-input">
+                <input type="file" id="localFile" accept=".xlsx,.xls,.csv" />
+                <button id="uploadLocalFile" class="login-button">Importer depuis l'ordinateur</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/auth/google');
+                const data = await response.json();
+                if (data.auth_url) {
+                    window.location.href = data.auth_url;
+                } else if (data.error) {
+                    const errorMessage = document.getElementById('errorMessage');
+                    errorMessage.textContent = data.error;
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.textContent = 'Une erreur est survenue lors de la connexion';
+                errorMessage.style.display = 'block';
+            }
+        });
+
+        document.getElementById('selectGoogleSheet').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/select-spreadsheet');
+                const data = await response.json();
+                if (data.spreadsheet_id) {
+                    console.log('Spreadsheet selected:', data.spreadsheet_id);
+                    alert('Fichier sélectionné avec succès!');
+                    window.location.href = '/record';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        document.getElementById('uploadLocalFile').addEventListener('click', async () => {
+            const fileInput = document.getElementById('localFile');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Veuillez sélectionner un fichier');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload-spreadsheet', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    console.log('File uploaded successfully');
+                    alert('Fichier importé avec succès!');
+                    window.location.href = '/record';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html> 
