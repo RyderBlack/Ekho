@@ -39,7 +39,7 @@ print(result)
 
 **Usage Demo**
 
-https://github.com/user-attachments/assets/Ekho_video_demo.mp4
+![Usage Demo](https://github.com/RyderBlack/Ekho/blob/main/assets/Ekho_video_demo.gif?raw=true)
 
 **Success Demo**
 
