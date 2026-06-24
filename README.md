@@ -35,6 +35,16 @@ result = transcribe_youtube_url("https://www.youtube.com/watch?v=example")
 print(result)
 ```
 
+## Demo
+
+**Usage Demo**
+
+https://github.com/user-attachments/assets/Ekho_video_demo.mp4
+
+**Success Demo**
+
+https://github.com/user-attachments/assets/ekho_success_01.mp4
+
 ## Notes
 
 - Make sure you have a stable internet connection as the model runs on Hugging Face's servers
