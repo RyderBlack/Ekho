@@ -1,39 +1,6 @@
-# Whisper Large V3 Turbo Demo
+# EKHO - AI Vocal Assistant
 
-This project demonstrates how to use the Hugging Face Whisper Large V3 Turbo model for audio transcription and translation.
-
-## Setup
-
-1. Install the required dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-The script provides three main functions:
-
-1. `transcribe_audio_file(audio_file_path, task="transcribe")`: Transcribes a local audio file
-2. `transcribe_audio_file_alt(audio_file_path, task="transcribe")`: Alternative method to transcribe a local audio file
-3. `transcribe_youtube_url(youtube_url, task="transcribe")`: Transcribes audio from a YouTube URL
-
-The `task` parameter can be either:
-- `"transcribe"`: Transcribes the audio in its original language
-- `"translate"`: Translates the audio to English
-
-### Example
-
-```python
-from whisper_demo import transcribe_audio_file, transcribe_youtube_url
-
-# Transcribe a local audio file
-result = transcribe_audio_file("path/to/your/audio.wav")
-print(result)
-
-# Transcribe a YouTube video
-result = transcribe_youtube_url("https://www.youtube.com/watch?v=example")
-print(result)
-```
+Ekho is an AI-powered vocal assistant designed for event attendance tracking. By pressing the voice button, Ekho listens for a participant's name, recognizes it using speech-to-text, and automatically adds that person to the event's attendance sheet — no manual input required.
 
 ## Demo
 
@@ -45,8 +12,39 @@ print(result)
 
 https://github.com/user-attachments/assets/08ff81db-4d2f-42c7-876c-9bcd8439ff72
 
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/RyderBlack/Ekho.git
+cd Ekho
+```
+
+2. Install the required dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up your environment variables by creating a `.env` file at the root of the project:
+```
+GOOGLE_CREDENTIALS=your_google_service_account_json
+SPREADSHEET_ID=your_google_spreadsheet_id
+```
+
+## Usage
+
+1. Launch the app:
+```bash
+python app.py
+```
+
+2. Open the interface in your browser.
+
+3. Press the **voice button** and clearly say the participant's name.
+
+4. Ekho will recognize the name and automatically add it to the attendance sheet linked to the current event.
+
 ## Notes
 
-- Make sure you have a stable internet connection as the model runs on Hugging Face's servers
-- The script handles errors gracefully and will return error messages if something goes wrong
-- For YouTube URLs, make sure the video is publicly accessible 
+- Make sure you have a stable internet connection — the speech recognition model runs on Hugging Face's servers.
+- The attendance sheet is managed via Google Sheets; ensure your service account has edit access to the spreadsheet.
